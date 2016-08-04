@@ -8,7 +8,12 @@ import buscript.StringReplacer;
 import com.vexsoftware.votifier.model.Vote;
 import com.vexsoftware.votifier.model.VotifierEvent;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
+import net.md_5.bungee.api.ChatColor;
+// import net.md_5.bungee.api.chat.ClickEvent;
+// import net.md_5.bungee.api.chat.ComponentBuilder;
+// import net.md_5.bungee.api.chat.HoverEvent;
+// import net.md_5.bungee.api.chat.TextComponent;
+// import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -24,7 +29,7 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.LinkedList;
+// import java.util.LinkedList;
 import java.util.List;
 
 public class VotifierScripts extends JavaPlugin implements Listener {
@@ -41,6 +46,7 @@ public class VotifierScripts extends JavaPlugin implements Listener {
     private File playerFile = null;
     private FileConfiguration playerConfig = null;
 
+    @SuppressWarnings("unused")
     @EventHandler
     public void vote(VotifierEvent event) {
         Vote vote = event.getVote();
@@ -59,6 +65,7 @@ public class VotifierScripts extends JavaPlugin implements Listener {
         timestamp = null;
     }
 
+    @SuppressWarnings("unused")
     @EventHandler
     public void playerJoin(PlayerJoinEvent event) {
         String player = event.getPlayer().getName();
@@ -155,12 +162,7 @@ public class VotifierScripts extends JavaPlugin implements Listener {
         buscript.registerStringReplacer(new TimestampReplacer());
         buscript.addScriptMethods(new VotifierFunctions(this));
         getServer().getPluginManager().registerEvents(this, this);
-        getServer().getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
-            @Override
-            public void run() {
-                getScriptAPI().executeScript(getStartupScript());
-            }
-        });
+        getServer().getScheduler().scheduleSyncDelayedTask(this, () -> getScriptAPI().executeScript(getStartupScript()));
     }
 
     @Override
@@ -197,13 +199,14 @@ public class VotifierScripts extends JavaPlugin implements Listener {
         return true;
     }
 
-    public File getVoteScript() {
+    private File getVoteScript() {
         if (voteScriptFile == null) {
             voteScriptFile = new File(getDataFolder(), "vote-script.txt");
             if (!voteScriptFile.exists()) {
                 try {
                     this.saveResource("vote-script.txt", false);
                     if (!voteScriptFile.exists()) {
+                        //noinspection ResultOfMethodCallIgnored
                         voteScriptFile.createNewFile();
                     }
                 } catch (IOException e) {
@@ -216,13 +219,14 @@ public class VotifierScripts extends JavaPlugin implements Listener {
         return voteScriptFile;
     }
 
-    public File getStartupScript() {
+    private File getStartupScript() {
         if (startupScriptFile == null) {
             startupScriptFile = new File(getDataFolder(), "startup-script.txt");
             if (!startupScriptFile.exists()) {
                 try {
                     this.saveResource("startup-script.txt", false);
                     if (!startupScriptFile.exists()) {
+                        //noinspection ResultOfMethodCallIgnored
                         startupScriptFile.createNewFile();
                     }
                 } catch (IOException e) {
@@ -240,6 +244,7 @@ public class VotifierScripts extends JavaPlugin implements Listener {
             playerFile = new File(getDataFolder(), "players.dat");
             if (!playerFile.exists()) {
                 try {
+                    //noinspection ResultOfMethodCallIgnored
                     playerFile.createNewFile();
                 } catch (IOException e) {
                     getLogger().severe("Error creating dat file: " + e.getMessage());
@@ -258,15 +263,15 @@ public class VotifierScripts extends JavaPlugin implements Listener {
         return playerConfig;
     }
 
-    public void executeVoteScript(String target, Player player) {
+    private void executeVoteScript(String target, Player player) {
         File scriptFile = getVoteScript();
         if (scriptFile == null) {
             return;
         }
-        buscript.executeScript(scriptFile, target, player);
+        Bukkit.getScheduler().runTaskAsynchronously(this, () -> buscript.executeScript(scriptFile, target, player));
     }
 
-    public Buscript getScriptAPI() {
+    Buscript getScriptAPI() {
         return buscript;
     }
 
@@ -277,7 +282,7 @@ public class VotifierScripts extends JavaPlugin implements Listener {
         } else {
             List<String> playerScripts = getPlayerConfig().getStringList("runWhenOnline." + target);
             if (playerScripts == null) {
-                playerScripts = new ArrayList<String>(1);
+                playerScripts = new ArrayList<>(1);
             }
             playerScripts.add(script);
             getPlayerConfig().set("runWhenOnline." + target, playerScripts);
